@@ -1,0 +1,6 @@
+{
+  "name": "PG Metadata Generator",
+  "description": "An AI-powered application to generate titles and tags for images. Upload an image to create SEO-friendly metadata with short or long detail options, styled with a modern glassmorphic interface. Powered by Pixel Gear.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
