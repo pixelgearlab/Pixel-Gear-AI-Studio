@@ -1,3 +1,4 @@
+
 export enum AppMode {
   MetadataGenerator = 'Metadata Generator',
   ImageToPrompt = 'Image to Prompt',
@@ -57,7 +58,7 @@ export interface Theme {
 }
 
 export interface AppSettings {
+  apiKey: string;
   themeName: string;
   backgroundUrl: string;
-  apiKey: string;
 }

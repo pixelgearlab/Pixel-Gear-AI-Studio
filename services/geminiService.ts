@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { StylePreset, MetadataResult, PromptRefinementType, PromptResult } from '../types';
 
@@ -63,13 +64,13 @@ const getPromptConfig = (stylePreset: StylePreset) => {
 
 
 export const generateMetadata = async (
-  apiKey: string,
   base64ImageData: string,
-  stylePreset: StylePreset
+  stylePreset: StylePreset,
+  apiKey: string
 ): Promise<MetadataResult> => {
 
     if (!apiKey) {
-        throw new Error("API key is not provided.");
+        throw new Error("API key is not configured. Please add it in settings.");
     }
 
     const ai = new GoogleGenAI({ apiKey });
@@ -102,7 +103,7 @@ export const generateMetadata = async (
     } catch (error) {
         console.error("Error calling Gemini API:", error);
         if (error instanceof Error && error.message.includes('API key not valid')) {
-             throw new Error("Invalid API Key. Please check it in the settings.");
+             throw new Error("Invalid API Key. Please check your key in the settings.");
         }
         throw new Error("Failed to communicate with the AI service.");
     }
@@ -135,12 +136,12 @@ export const generateMetadata = async (
 };
 
 export const generateStyledPrompt = async (
-    apiKey: string,
     refinementType: PromptRefinementType,
+    apiKey: string,
     base64ImageData?: string,
     userIdea?: string,
 ): Promise<PromptResult> => {
-    if (!apiKey) throw new Error("API key is not provided.");
+    if (!apiKey) throw new Error("API key is not configured. Please add it in settings.");
     if (!base64ImageData && !userIdea) throw new Error("Please provide an image or an idea to generate a prompt.");
 
     const ai = new GoogleGenAI({ apiKey });
@@ -205,7 +206,7 @@ export const generateStyledPrompt = async (
     } catch (error) {
         console.error("Error calling Gemini API for prompt generation:", error);
         if (error instanceof Error && error.message.includes('API key not valid')) {
-             throw new Error("Invalid API Key. Please check it in the settings.");
+             throw new Error("Invalid API Key. Please check your key in the settings.");
         }
         throw new Error("Failed to communicate with the AI service.");
     }

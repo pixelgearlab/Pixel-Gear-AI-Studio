@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { XCircleIcon, CheckIcon, QuestionMarkCircleIcon } from './icons';
 import { THEMES, BACKGROUNDS } from '../constants';
@@ -13,7 +14,7 @@ interface SettingsPanelProps {
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isVisible, onClose, settings, onSettingsChange }) => {
   const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
-  const [isGuideVisible, setIsGuideVisible] = useState(false);
+  const [isApiGuideVisible, setIsApiGuideVisible] = useState(false);
 
   useEffect(() => {
     if (isVisible) {
@@ -28,10 +29,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isVisible, onClose
   const handleBackgroundSelect = (bg: { name: string; url: string }) => {
     setLocalSettings(prev => ({ ...prev, backgroundUrl: bg.url }));
   };
-  
-  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalSettings(prev => ({ ...prev, apiKey: e.target.value }));
-  };
 
   const handleSave = () => {
     onSettingsChange(localSettings);
@@ -41,7 +38,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isVisible, onClose
 
   return (
     <>
-      <ApiGuideModal isVisible={isGuideVisible} onClose={() => setIsGuideVisible(false)} />
+      <ApiGuideModal isVisible={isApiGuideVisible} onClose={() => setIsApiGuideVisible(false)} />
       <div 
         className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
@@ -58,30 +55,28 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isVisible, onClose
           </header>
 
           <div className="flex-grow p-4 overflow-y-auto space-y-8">
-            {/* API Key Input Section */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                 <h3 className="text-lg font-semibold text-white">API Configuration</h3>
-                 <button onClick={() => setIsGuideVisible(true)} className="text-slate-400 hover:text-indigo-300 transition-colors" aria-label="Open API key guide">
-                    <QuestionMarkCircleIcon className="w-6 h-6" />
-                 </button>
-              </div>
-              <div className="bg-slate-800/50 border border-slate-700 p-4 rounded-lg space-y-3">
-                  <label htmlFor="apiKey" className="font-semibold text-slate-200">Gemini API Key</label>
-                  <p className="text-sm text-slate-400">
-                      Your API key is stored in your browser's local storage and is not sent to our servers.
-                  </p>
-                  <input
-                      id="apiKey"
-                      type="password"
-                      value={localSettings.apiKey || ''}
-                      onChange={handleApiKeyChange}
-                      placeholder="Enter your Gemini API Key"
-                      className="w-full bg-slate-900/70 border border-slate-600 p-2 rounded-md text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-              </div>
-            </div>
             
+            {/* API Key */}
+            <div>
+                <div className="flex items-center justify-between mb-2">
+                    <label htmlFor="api-key" className="text-lg font-semibold text-white">Gemini API Key</label>
+                    <button onClick={() => setIsApiGuideVisible(true)} className="flex items-center gap-1 text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+                        <QuestionMarkCircleIcon className="w-5 h-5"/>
+                        <span>How to get a key?</span>
+                    </button>
+                </div>
+                <input
+                    id="api-key"
+                    type="password"
+                    value={localSettings.apiKey}
+                    onChange={(e) => setLocalSettings(prev => ({ ...prev, apiKey: e.target.value }))}
+                    placeholder="Enter your API key here"
+                    className="w-full bg-black/30 border border-slate-600 rounded-md px-3 py-2 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                />
+                <p className="text-xs text-slate-400 mt-2">Your key is stored locally in your browser and never sent to our servers.</p>
+            </div>
+
+
             {/* Theme Selector */}
             <div>
               <h3 className="text-lg font-semibold text-white mb-3">Theme</h3>

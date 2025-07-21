@@ -1,10 +1,11 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { ResultDisplay } from './components/ResultDisplay';
 import { generateMetadata, generateStyledPrompt } from './services/geminiService';
 import { StylePreset, MetadataResult, HistoryItem, AppSettings, Theme, AppMode, PromptResult, PromptRefinementType } from './types';
 import { Spinner } from './components/Spinner';
-import { UploadIcon, HistoryIcon, GearIcon } from './components/icons';
+import { UploadIcon, HistoryIcon, GearIcon, ExclamationTriangleIcon } from './components/icons';
 import { HistoryPanel } from './components/HistoryPanel';
 import { Toast } from './components/Toast';
 import { SettingsPanel } from './components/SettingsPanel';
@@ -68,9 +69,9 @@ export default function App() {
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [settings, setSettings] = useState<AppSettings>({
+    apiKey: '',
     themeName: THEMES[0].name,
     backgroundUrl: BACKGROUNDS[0].url,
-    apiKey: '',
   });
 
   const activeTheme = THEMES.find(t => t.name === settings.themeName) || THEMES[0];
@@ -150,30 +151,30 @@ export default function App() {
     setUserIdea('');
     setError(null);
   }, [appMode]);
-  
-  const checkApiKey = () => {
+
+  const preflightCheck = () => {
     if (!settings.apiKey) {
-        setError('Please set your Gemini API key in the settings panel.');
-        showToast('API Key is missing.', 'error');
-        setIsSettingsVisible(true);
-        return false;
+      setError('API Key is missing. Please add it in the settings panel.');
+      setIsSettingsVisible(true);
+      return false;
     }
     return true;
   }
 
   const handleGenerateMetadata = useCallback(async () => {
+    if (!preflightCheck()) return;
+
     if (!imageBase64 || !imagePreview) {
       setError('Please upload an image first.');
       return;
     }
-    if (!checkApiKey()) return;
 
     setIsLoading(true);
     setError(null);
     setMetadata(null);
 
     try {
-      const result = await generateMetadata(settings.apiKey, imageBase64, stylePreset);
+      const result = await generateMetadata(imageBase64, stylePreset, settings.apiKey);
       setMetadata(result);
       const newHistoryItem: HistoryItem = {
           id: Date.now(),
@@ -202,21 +203,22 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
-  }, [imageBase64, stylePreset, imagePreview, showToast, settings.apiKey]);
+  }, [imageBase64, stylePreset, imagePreview, settings.apiKey, showToast]);
   
   const handleGenerateStyledPrompt = useCallback(async (refinementType: PromptRefinementType) => {
+     if (!preflightCheck()) return;
+
      if (!imagePreview && !userIdea) {
       setError('Please upload an image or write an idea first.');
       return;
     }
-    if (!checkApiKey()) return;
 
     setIsLoading(true);
     setError(null);
     setPromptResult(null);
 
     try {
-        const result = await generateStyledPrompt(settings.apiKey, refinementType, imageBase64 ?? undefined, userIdea.trim() || undefined);
+        const result = await generateStyledPrompt(refinementType, settings.apiKey, imageBase64 ?? undefined, userIdea.trim() || undefined);
         setPromptResult(result);
         const newHistoryItem: HistoryItem = {
             id: Date.now(),
@@ -245,7 +247,7 @@ export default function App() {
     } finally {
         setIsLoading(false);
     }
-  }, [imageBase64, imagePreview, userIdea, showToast, settings.apiKey]);
+  }, [imageBase64, imagePreview, userIdea, settings.apiKey, showToast]);
 
   const handleSelectHistoryItem = useCallback((item: HistoryItem) => {
     setAppMode(item.type);
@@ -294,18 +296,25 @@ export default function App() {
         onSettingsChange={handleSettingsChange}
       />
       <div className="min-h-screen w-full bg-black/50 backdrop-blur-sm flex flex-col items-center p-4 sm:p-6 lg:p-8 relative">
-        <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
+        {!settings.apiKey && (
+          <div className="fixed top-0 left-0 right-0 bg-red-500/90 text-white p-3 text-center text-sm font-semibold z-30 flex items-center justify-center gap-2 shadow-lg animate-fade-in">
+              <ExclamationTriangleIcon className="w-5 h-5 flex-shrink-0" />
+              <span>Your Gemini API Key is missing. Please add it in the settings to use the app.</span>
+              <button onClick={() => setIsSettingsVisible(true)} className="ml-2 underline font-bold hover:text-red-200 transition-colors">Open Settings</button>
+          </div>
+        )}
+        <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-10">
           <button onClick={() => setIsHistoryVisible(true)} className="p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors duration-300 backdrop-blur-lg" aria-label="View history">
             <HistoryIcon className="w-6 h-6 text-white"/>
           </button>
         </div>
-        <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10">
             <button onClick={() => setIsSettingsVisible(true)} className="p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors duration-300 backdrop-blur-lg" aria-label="Open settings">
               <GearIcon className="w-6 h-6 text-white"/>
             </button>
         </div>
 
-        <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
+        <div className={`w-full max-w-4xl mx-auto flex flex-col items-center transition-all duration-300 ${!settings.apiKey ? 'pt-12' : ''}`}>
           <header className="text-center mb-6">
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white">
               Pixel Gear AI Studio
@@ -410,7 +419,7 @@ export default function App() {
       
       <style>{`
         @keyframes fade-in {
-          from { opacity: 0; transform: translateY(10px); }
+          from { opacity: 0; transform: translateY(-10px); }
           to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in {
